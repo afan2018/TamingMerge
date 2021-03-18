@@ -148,12 +148,13 @@ Proof.
   induction* Red.
 Qed.
 
-Lemma multi_red_app2 : forall v t t',
+(* multi_red_app2 no longer holds in the CBN variant *)
+(* Lemma multi_red_app2 : forall v t t',
     value v -> lc_exp v -> t ->* t' -> (e_app v t) ->* (e_app v t').
 Proof.
   introv Val ? Red.
   induction* Red.
-Qed.
+Qed. *)
 
 
 Lemma multi_red_merge1 : forall t1 t2 t1',

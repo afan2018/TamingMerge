@@ -54,7 +54,7 @@ $(TARGET)_inf2.v: $(OTT_LOC)/$(DUNS).ott
 	@echo "$(OTT_LOC)/$(DUNS)2.ott deleted"
 
 $(COQMKFILENAME): Makefile $(SYNTAX)_ott.v $(TARGET)_inf.v $(TARGET)_inf2.v
-	{ echo "-R . $(LIBNAME)" ; ls *.v ; } > _CoqProject && coq_makefile -arg '-w -variable-collision,-meta-collision,-require-in-module' -f _CoqProject -o $(COQMKFILENAME)
+	coq_makefile -arg '-w -variable-collision,-meta-collision,-require-in-module' -f _CoqProject -o $(COQMKFILENAME)
 
 
 coqclean:

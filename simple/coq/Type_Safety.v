@@ -129,23 +129,21 @@ Proof.
       inverts Typ1. inverts H.
       exists B. split*.
       constructor.
-      forwards* (?&Typ_v'&Sub): TypedReduce_preservation H5.
       pick_fresh y.
-      forwards~ Typ_chk: H8 y.
+      forwards~ Typ_chk: H7 y.
       rewrite_env(nil++[(y,A)]++nil) in Typ_chk.
-      forwards~ (?&?&?): Typing_subst_2 Typ_chk Typ_v'.
-      eapply Typing_chk_sub.
+      apply Typ_anno in Typ2.
+      forwards~ (?&?&?): Typing_subst_2 Typ_chk Typ2.
       rewrite* (@subst_exp_intro y).
+      simpl in H.
+      apply (Typing_chk_sub _ _ x).
+      apply H.
       apply~ subsub2sub.
     + forwards* (?&?&?): IHTyp1.
       forwards* (?&C'&?&?&?): arrTyp_subsub H H1.
       exists C'. split*.
       applys* Typ_app.
       applys~ Typing_chk_sub Typ2.
-    +
-      forwards* (?&?&?): IHTyp2.
-      apply subsub2sub in H1.
-      forwards*: Typing_chk_sub H0 H1.
   - Case "Typ_merge".
     inverts* J.
     + forwards~ (?&?&?): IHTyp1 H4.
@@ -277,12 +275,9 @@ Proof. (*
   - Case "app".
     right. inverts Lc.
     lets* [Val1 | [e1' Red1]]: IHTyp1.
-    lets* [Val2 | [e2' Red2]]: IHTyp2.
     inverts* Typ1;
       try solve [ inverts Val1 ].
     all: inverts H.
-    + SCase "e_app (e_absv _ _) v2".
-      lets* (v2' & Tyr): TypedReduce_progress Typ2.
   - Case "merge".
     inverts Lc.
     destruct~ IHTyp1 as [ Val1 | [t1' Red1]];

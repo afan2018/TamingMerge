@@ -66,13 +66,15 @@ Proof.
   induction Red1;
     introv Typ Red2.
   - (* top *)
-    inverts* Red2.
-    + inverts H4.
-    + forwards*: step_not_value H4.
+    inversion Red2; subst.
+    + reflexivity.
+    + inversion H4. 
+    (* + forwards*: step_not_value H4. *)
   - Case "beta3".
     inverts* Red2.
-    + SCase "beta3".
-      inverts* Typ. inverts H2.
+    (* + SCase "beta3".
+      inverts* Typ.
+      inverts H2.
       inverts H11.
       * (* arrow *)
         lets* (?&?): Typing_chk2inf H12. (* Typing condition for the following assert *)
@@ -81,11 +83,11 @@ Proof.
       * (* top *)
         lets* (?&?): Typing_chk2inf H12. (* Typing condition for the following assert *)
         assert (v' = v'0) by forwards*: TypedReduce_unique H1 H9.
-        congruence.
+        congruence. *)
     + SCase "app1".
-      inverts* H6.
-    + SCase "app2".
-      forwards*: step_not_value H6.
+      inverts* H5.
+    (* + SCase "app2".
+      forwards*: step_not_value H6. *)
   - Case "annov".
     inverts* Red2.
     + SCase "annov".
@@ -103,17 +105,17 @@ Proof.
     + SCase "appl".
       inverts* Typ. inverts H0.
       forwards*: IHRed1. subst~.
-    + SCase "appr".
-      forwards*: step_not_value Red1.
-  - Case "appr".
+    (* + SCase "appr".
+      forwards*: step_not_value Red1. *)
+  (* - Case "appr".
     inverts* Red2;
       try solve [forwards*: step_not_value Red1].
     + SCase "appl".
-      forwards*: step_not_value H4.
+      
     + SCase "appr".
       inverts* Typ. inverts H0.
       forwards*: IHRed1.
-      congruence.
+      congruence. *)
   - Case "mergel".
     inverts* Red2;
       try solve [forwards*: step_not_value Red1].

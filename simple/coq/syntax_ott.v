@@ -333,14 +333,13 @@ Inductive TypedReduce : exp -> typ -> exp -> Prop :=    (* defn TypedReduce *)
      TypedReduce v B v2 ->
      TypedReduce v (t_and A B) (e_merge v1 v2)
 with step : exp -> exp -> Prop :=    (* defn step *)
- | Step_top : forall (v:exp),
-     value v ->
-     step (e_app e_top v) e_top
- | Step_beta : forall (A:typ) (e:exp) (B:typ) (v v':exp),
+ | Step_top : forall (e:exp),
+     lc_exp e ->
+     step (e_app e_top e) e_top
+ | Step_beta : forall (A:typ) (e:exp) (B:typ) (e':exp), (* TODO *)
      lc_exp (e_abs A e B) ->
-     value v ->
-     TypedReduce v A v' ->
-     step (e_app  ( (e_abs A e B) )  v) (e_anno  (  (open_exp_wrt_exp  e v' )  )  B)
+     lc_exp e' ->
+     step (e_app  ( (e_abs A e B) )  e') (e_anno  (  (open_exp_wrt_exp e (e_anno e' A) )  )  B)
  | Step_annov : forall (v:exp) (A:typ) (v':exp),
      value v ->
      TypedReduce v A v' ->
@@ -349,10 +348,10 @@ with step : exp -> exp -> Prop :=    (* defn step *)
      lc_exp e2 ->
      step e1 e1' ->
      step (e_app e1 e2) (e_app e1' e2)
- | Step_appr : forall (v1 e2 e2':exp),
+ (* | Step_appr : forall (v1 e2 e2':exp),
      value v1 ->
      step e2 e2' ->
-     step (e_app v1 e2) (e_app v1 e2')
+     step (e_app v1 e2) (e_app v1 e2') *)
  | Step_mergel : forall (e1 e2 e1':exp),
      lc_exp e2 ->
      step e1 e1' ->

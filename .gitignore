@@ -277,3 +277,5 @@ TSWLatexianTemp*
 .vscode
 main.docx
 
+.DS_Store
+

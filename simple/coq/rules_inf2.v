@@ -40,7 +40,7 @@ Fixpoint close_dexp_wrt_dexp_rec (n1 : nat) (x1 : var) (ee1 : dexp) {struct ee1}
     | de_abs ee2 => de_abs (close_dexp_wrt_dexp_rec (S n1) x1 ee2)
     | de_app ee2 ee3 => de_app (close_dexp_wrt_dexp_rec n1 x1 ee2) (close_dexp_wrt_dexp_rec n1 x1 ee3)
     | de_merge ee2 ee3 => de_merge (close_dexp_wrt_dexp_rec n1 x1 ee2) (close_dexp_wrt_dexp_rec n1 x1 ee3)
-    | de_ann ee2 A => de_ann (close_dexp_wrt_dexp_rec n1 x1 ee2) A
+    | de_ann ee2 => de_ann (close_dexp_wrt_dexp_rec n1 x1 ee2)
     | de_fixpoint ee2 => de_fixpoint (close_dexp_wrt_dexp_rec (S n1) x1 ee2)
   end.
 
@@ -59,7 +59,7 @@ Fixpoint size_dexp (ee1 : dexp) {struct ee1} : nat :=
     | de_abs ee2 => 1 + (size_dexp ee2)
     | de_app ee2 ee3 => 1 + (size_dexp ee2) + (size_dexp ee3)
     | de_merge ee2 ee3 => 1 + (size_dexp ee2) + (size_dexp ee3)
-    | de_ann ee2 A => 1 + (size_dexp ee2)
+    | de_ann ee2 => 1 + (size_dexp ee2)
     | de_fixpoint ee2 => 1 + (size_dexp ee2)
   end.
 
@@ -90,9 +90,9 @@ Inductive degree_dexp_wrt_dexp : nat -> dexp -> Prop :=
     degree_dexp_wrt_dexp n1 ee1 ->
     degree_dexp_wrt_dexp n1 ee2 ->
     degree_dexp_wrt_dexp n1 (de_merge ee1 ee2)
-  | degree_wrt_dexp_de_ann : forall n1 ee1 A,
+  | degree_wrt_dexp_de_ann : forall n1 ee1,
     degree_dexp_wrt_dexp n1 ee1 ->
-    degree_dexp_wrt_dexp n1 (de_ann ee1 A)
+    degree_dexp_wrt_dexp n1 (de_ann ee1)
   | degree_wrt_dexp_de_fixpoint : forall n1 ee1,
     degree_dexp_wrt_dexp (S n1) ee1 ->
     degree_dexp_wrt_dexp n1 (de_fixpoint ee1).
@@ -127,9 +127,9 @@ Inductive lc_set_dexp : dexp -> Set :=
     lc_set_dexp ee1 ->
     lc_set_dexp ee2 ->
     lc_set_dexp (de_merge ee1 ee2)
-  | lc_set_de_ann : forall ee1 A,
+  | lc_set_de_ann : forall ee1,
     lc_set_dexp ee1 ->
-    lc_set_dexp (de_ann ee1 A)
+    lc_set_dexp (de_ann ee1)
   | lc_set_de_fixpoint : forall ee1,
     (forall x1 : var, lc_set_dexp (open_dexp_wrt_dexp ee1 (de_var_f x1))) ->
     lc_set_dexp (de_fixpoint ee1).
@@ -171,6 +171,7 @@ Hint Unfold body_dexp_wrt_dexp : core.
 (** Additional hint declarations. *)
 
 Hint Resolve @plus_le_compat : lngen.
+
 (** Redefine some tactics. *)
 
 Ltac default_case_split ::=
