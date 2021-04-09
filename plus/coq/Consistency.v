@@ -146,15 +146,18 @@ Proof.
 Qed.
 
 Lemma consistencySpec_rcd_inv : forall T1 T2 l v1 v2,
-    value v1 -> value v2 -> nil ⊢ v1 ⇒ T1 -> nil ⊢ v2 ⇒ T2 ->
-    consistencySpec (e_rcd l v1) (e_rcd l v2) -> consistencySpec v1 v2.
+    value v1 -> value v2 -> Typing nil v1 Inf T1 -> Typing nil v2 Inf T2 ->
+    consistencySpec (e_rcd l T1 v1) (e_rcd l T2 v2) -> consistencySpec v1 v2.
 Proof.
   intros T1 T2 l v1 v2 Val1 Val2 Typ1 Typ2 Cons.
   unfolds. introv Ord R1 R2.
   destruct (toplike_decidable A).
   - forwards~: TypedReduce_toplike R1 R2.
-  - forwards*: Cons (t_rcd l A).
-    inversion~ H0.
+  - forwards*: TypedReduce_sub T1 R1.
+    forwards*: TypedReduce_sub T2 R2.
+    forwards*: Cons (t_rcd l A).
+    inversion H2; subst; clear H2.
+    forwards*: TypedReduce_unique v2 v2 v1'.
 Qed.
 
 Ltac indExpSize s :=
@@ -206,8 +209,20 @@ Proof with (simpl; try omega; auto).
     inverts keep Typ1; inverts keep Typ2.
     destruct (l0==l1).
     + subst*.
-      forwards~ Con': consistencySpec_rcd_inv H1 H2 Cons.
-      forwards*: IH Con'...
+      lets~ [?|(?&?&?&?&?)]: disjoint_or_exists (t_rcd l1 A0) (t_rcd l1 A1).
+      forwards*: C_disjoint (e_anno e A0) (e_anno e0 A1).
+      unfolds in Cons.
+      inverts* H0.
+      inverts* H1.
+      * assert (mhl: forall T l, ~ topLike (t_rcd l T) -> ~ topLike T).
+        { intros T l topH contra. forwards: TL_rcd l contra. forwards~: topH H0. }
+        forwards: mhl H2; clear mhl.
+        forwards~ TRe: TReduce_rcd l1 A0 e D.
+        forwards~ TRe0: TReduce_rcd l1 A1 e0 D.
+        forwards~: Cons (t_rcd l1 D) TRe TRe0.
+        injection H1; intros eq; subst*.
+      * forwards*: split_ord_false H0 H.
+      * forwards*: split_ord_false H3 H.
     + applys C_disjoint; constructor*.
 Qed.
 
@@ -221,13 +236,13 @@ Proof.
   forwards* : consistencySpec_lams_inv Cons.
 Qed.
 
-Lemma consistent_rcd_inv : forall l v1 v2,
-    consistent (e_rcd l v1) (e_rcd l v2) -> consistent v1 v2.
+Lemma consistent_rcd_inv : forall l e1 e2 A B,
+    consistent (e_rcd l A e1) (e_rcd l B e2) -> consistent (e_anno e1 A) (e_anno e2 B).
 Proof.
-  intros l v1 v2 H.
+  intros l e1 e2 A B H.
   inverts~ H.
   - inverts H0. inverts H1.
-    enough (Dis: disjoint A0 A).
+    enough (Dis: disjoint A B).
     applys* C_disjoint Dis. eauto.
 Qed.
 

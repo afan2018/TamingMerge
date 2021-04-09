@@ -6,7 +6,7 @@ Infrastructure.v
 Key_Properties.v
 LibTactics.v
 Progress.v
-rules_inf.v
 Subtyping_inversion.v
-syntax_ott.v
 Type_Safety.v
+rules_inf.v
+syntax_ott.v

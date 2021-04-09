@@ -37,40 +37,37 @@ Proof with eauto.
       induction v; intros; inverts Typ; try solve [inverts Val]...
   - lets *[?|?]: toplike_decidable D.
     inverts Typ; inverts Val.
-    forwards* (?&?): IHSub H5.
+    exists (e_rcd l D (e_anno e D)).
+    constructor; assumption.
   -
     forwards* (?&?): IHSub1 Typ.
     forwards* (?&?): IHSub2 Typ.
 Qed.
 
-
-Lemma papp_progress: forall v1 v2 A,
-    value v1 -> value v2 -> Typing nil (e_app v1 v2) Inf A -> exists e, papp v1 (vl_exp v2) e.
+Lemma papp_progress: forall v1 e A,
+    value v1 -> lc_exp e -> Typing nil (e_app v1 e) Inf A -> exists e', papp v1 (vl_exp e) e'.
 Proof with eauto.
-  intros v1 v2 A Val1 Val2 Typ. gen A.
+  intros v1 e A Val1 Lc Typ. gen A.
   induction Val1; intros;
     try solve [exists*].
   - inverts Typ.
-    inverts H1. inverts H3.
-  - inverts Typ. inverts H2.
-    inverts H4.
-    forwards* (?&?): TypedReduce_progress Val2.
+    inverts H1. inverts H3. 
   - inverts Typ.
     inverts H1; inverts H3...
     + assert (sub (t_and A2 B2) A2) by auto_sub.
       assert (sub (t_and A2 B2) B2) by auto_sub.
-      forwards*: Typ_app v1 v2.
-      forwards*: Typ_app v0 v2.
+      forwards*: Typ_app v1 e.
+      forwards*: Typ_app v2 e.
       forwards* (?&?): IHVal1_1.
       forwards* (?&?): IHVal1_2.
     + assert (sub (t_and A2 B2) A2) by auto_sub.
       assert (sub (t_and A2 B2) B2) by auto_sub.
-      forwards*: Typ_app v1 v2.
-      forwards*: Typ_app v0 v2.
+      forwards*: Typ_app v1 e.
+      forwards*: Typ_app v2 e.
       forwards* (?&?): IHVal1_1.
       forwards* (?&?): IHVal1_2.
-  - inverts Typ. inverts H1.
-    inverts H3.
+  - inverts Typ. inverts H2.
+    inverts H4.
 Qed.
 
 
@@ -92,7 +89,7 @@ Proof with eauto.
       lets*: Typ_proj v2 la H9.
       forwards* (?&?): IHVal1_1.
       forwards* (?&?): IHVal1_2.
-  - inverts Typ. inverts H2. inverts* H3.
+  - inverts Typ. inverts H3. inverts* H4.
 Qed.
 
 
@@ -114,8 +111,8 @@ Proof with auto.
     destruct~ IHTyp1 as [Val1 | [e1' Red1]].
     destruct~ IHTyp2 as [Val2 | [e2' Red2]].
     + (* v1 v2 *)
-      forwards* (?&?): papp_progress Val1 Val2.
-    + exists*.
+      forwards* (?&?): papp_progress Val1 H3.
+    + forwards* (?&?): papp_progress Val1 H3.
     + exists*.
   - Case "proj".
     inverts Lc.
@@ -125,7 +122,7 @@ Proof with auto.
     + exists*.
   - Case "rcd".
     inverts Lc.
-    destruct~ IHTyp as [ Val1 | [t1' Red1]]. right*.
+    destruct~ IHTyp as [ Val1 | [t1' Red1]].
   - Case "merge".
     inverts Lc.
     destruct~ IHTyp1 as [ Val1 | [t1' Red1]];

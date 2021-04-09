@@ -54,7 +54,11 @@ Proof with (omega; auto).
       inverts keep R1; try solve [forwards~: TypedReduce_toplike R1 R2];
         inverts keep R2; try solve [forwards~: TypedReduce_toplike R1 R2];
           solve_false; auto.
-      simpl in SizeInd. forwards*: IH H10 H13. omega. congruence.
+      simpl in SizeInd. inverts* Cons. inverts H0. inverts H3.
+      forwards: disjoint_completeness H4.
+      forwards: H0 H12 H16.
+      forwards: H15 H3.
+      destruct H17.
     + (* disjoint *)
       forwards*: principal_type_checks u1. forwards*: principal_type_checks u2.
       subst.
@@ -85,19 +89,17 @@ Proof with (omega; auto).
 Qed.
 
 
-Lemma papp_unique: forall v1 v2 e1 e2 A,
-    value v1 -> value v2 -> Typing nil (e_app v1 v2) Inf A -> papp v1 (vl_exp v2) e1 -> papp v1 (vl_exp v2) e2 -> e1 = e2.
+Lemma papp_unique: forall v1 e e1 e2 A,
+    value v1 -> Typing nil (e_app v1 e) Inf A -> papp v1 (vl_exp e) e1 -> papp v1 (vl_exp e) e2 -> e1 = e2.
 Proof with eauto.
-  intros v1 v2 e1 e2 A Val1 Val2 Typ P1 P2.
+  intros v1 e e1 e2 A Val1 Typ P1 P2.
   gen e2 A.
   inductions P1; intros; inverts* P2.
-  - inverts Typ. lets (?&?&?): Typing_chk2inf H8.
-    forwards*: TypedReduce_unique H0 H7. congruence.
   - inverts Val1.
     inverts Typ.
     lets (?&?&?): Typing_chk2inf H8.
     inverts H5; inverts H7;
-      forwards*: IHP1_1 H1;
+      forwards*: IHP1_1 H2;
       forwards*: IHP1_2 H4;
       subst*.
 Qed.
@@ -126,9 +128,9 @@ Proof with eauto.
     introv Typ Red2.
   - Case "papp".
     inverts* Red2.
-    + forwards*: papp_unique H1 H7.
-    + forwards*: step_not_value H6.
-    + forwards*: step_not_value H6.
+    + forwards*: papp_unique H0 H5.
+    (* + forwards*: step_not_value H6. *)
+    + forwards*: step_not_value H5.
   - Case "proj".
     inverts* Red2.
     + forwards*: papp_unique2 H0 H5.
@@ -148,7 +150,7 @@ Proof with eauto.
       inverts Typ.
       forwards: IHRed1...
       congruence.
-  - Case "appr".
+  (* - Case "appr".
     inverts* Red2;
       try solve [forwards*: step_not_value Red1].
     + SCase "appl".
@@ -156,7 +158,7 @@ Proof with eauto.
     + SCase "appr".
       inverts* Typ. lets (?&?&?): Typing_chk2inf H7.
       forwards*: IHRed1.
-      congruence.
+      congruence. *)
   - Case "merge".
     inverts Typ;
       inverts* Red2;
@@ -191,8 +193,8 @@ Proof with eauto.
     congruence.
   - Case "fix".
     inverts* Red2.
-  - Case "rcd".
-    inverts* Typ. inverts* Red2. forwards*: IHRed1. congruence.
+  (* - Case "rcd".
+    inverts* Typ. inverts* Red2. forwards*: IHRed1. congruence. *)
   - Case "proj".
     inverts* Typ. inverts* Red2; try solve [forwards*: step_not_value Red1]. forwards*: IHRed1. congruence.
 Qed.

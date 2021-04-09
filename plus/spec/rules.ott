@@ -34,7 +34,7 @@ exp, e {{ tex e }}, v {{ tex v }}, u {{ tex u }}, one_e {{ tex 1 }}, two_e {{ te
   | e1 e2          ::  :: app     {{ com applications }}
   | e1 ,, e2       ::  :: merge   {{ com merge }}
   | e : A          ::  :: anno    {{ com annotation }}
-  | { l = e }      ::  :: rcd     {{ com record }}
+  | { l : A = e }      ::  :: rcd {{ com record }}
   | e . l          ::  :: proj    {{ com projection }}
   | e1 [ x ~> e2 ] :: M:: subst   {{ coq (open_exp_wrt_exp [[x e1]][[e2]]) }}
   | [ e <-- x ]    :: M:: close   {{ coq (close_exp_wrt_exp [[x]] [[e]]) }}
@@ -180,9 +180,9 @@ value v2
 value v1 ,, v2
 
 
-value v
+% value v
 ----------------------- :: rcd
-value {l=v}
+value {l:A=e}
 
 
 
@@ -643,11 +643,11 @@ B <: D
 \ x : A . e : B  ->(C -> D)  \ x : A . e : D
 
 
-ordinary A
-not topLike A
-v ->A v'
+ordinary B
+not topLike B
+A <: B
 -------------------------- :: rcd
-{l=v} ->{l:A} {l=v'}
+{l:A=e} ->{l:B} {l:B=e:B}
 
 
 ordinary A
@@ -676,23 +676,32 @@ v1 ; vl --> e :: :: papp :: Papp_
 by
 
 
-v ->A v'
+
 ---------------------------------------- :: abs
-\x:A.e:B ; v --> ( e [ x ~> v' ] ) : B
+\x:A.e:B ; e' --> ( e [ x ~> e':A ] ) : B
 
 
 ---------------------------------------- :: proj
-{l=v} ; {l} --> v
+{l:A=e} ; {l} --> e:A
 
 
-------------------------------- :: top
-T ; vl --> T
+------------------------------- :: etop
+T ; e --> T
+
+------------------------------- :: ltop
+T ; {l} --> T
 
 
-v1 ; vl --> e1
-v2 ; vl --> e2
-------------------------------- :: merge
-v1,,v2 ; vl --> e1,,e2
+v1 ; e --> e1
+v2 ; e --> e2
+------------------------------- :: emerge
+v1,,v2 ; e --> e1,,e2
+
+
+v1 ; {l} --> e1
+v2 ; {l} --> e2
+------------------------------- :: lmerge
+v1,,v2 ; {l} --> e1,,e2
 
 
 defn
@@ -703,10 +712,9 @@ by
 
 
 value v1
-value v2
-v1 ; v2 --> e
+v1 ; e2 --> e
 ----------------------  :: papp
-v1 v2 --> e
+v1 e2 --> e
 
 
 value v
@@ -726,10 +734,10 @@ e1  -->   e1'
 e1 e2  -->  e1' e2 
 
 
-value v1
-e2  -->   e2'
-------------------------------------- :: appr
-v1 e2  -->  v1 e2' 
+% value v1
+% e2  -->   e2'
+% ------------------------------------- :: appr
+% v1 e2  -->  v1 e2' 
 
 
 e1  -->  e1'
@@ -759,9 +767,9 @@ e : A  -->   e' : A
 fix x . e : A  -->   e [ x ~> fix x . e : A ] : A
 
 
-e --> e'
--------------------------------------- :: rcd
-{l=e} --> {l=e'}
+% e --> e'
+% -------------------------------------- :: rcd
+% {l=e} --> {l=e'}
 
 
 e --> e'
@@ -786,9 +794,9 @@ pval v
 pval e:A
 
 
-pval u
----------------------- :: rcd
-pval {l=u}
+
+% ---------------------- :: rcd
+% pval {l:A=u}
 
 
 pval u1
@@ -818,9 +826,9 @@ pType i int
 pType (\x:A.e:B) (A->B)
 
 
-pType u A
+
 ---------------------- :: rcd
-pType {l=u} {l:A} 
+pType {l:A=u} {l:A} 
 
 
 ---------------------- :: anno
@@ -854,9 +862,9 @@ i ~~ i
 e:A ~~ e:B
 
 
-u1 ~~ u2
--------------------------- :: rcd
-{l=u1} ~~ {l=u2}
+e1:A ~~ e2:B
+-------------------------- :: rcdb
+{l:A=e1} ~~ {l:B=e2}
 
 
 pType u1 A
@@ -924,9 +932,9 @@ A > {l : C}
 G |- e.l => C
 
 
-G |- e => A
+G |- e <= A
 ----------------------- :: rcd
-G |- {l=e} => {l:A}
+G |- {l:A=e} => {l:A}
 
 
 G |- e1 => A

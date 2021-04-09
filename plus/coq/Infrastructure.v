@@ -132,6 +132,14 @@ Proof.
   induction* H.
 Qed.
 
+Lemma prevalue_lc : forall v,
+    prevalue v -> lc_exp v.
+Proof.
+  intros v H. 
+  induction* H.
+  apply value_lc. 
+  assumption.
+Qed.
 
 Lemma TypedReduce_prv_value: forall v A v',
     value v -> TypedReduce v A v' -> value v'.
@@ -142,7 +150,7 @@ Proof.
     inverts* H.
   - inverts* Val.
   - inverts* Val.
-  - inverts* Val.
+  (* - inverts* Val. *)
 Qed.
 
 Hint Immediate value_merge_l_inv value_merge_r_inv value_lc TypedReduce_prv_value : core.
@@ -234,7 +242,6 @@ Lemma papp_2_lc: forall v1 v2 e,
 Proof.
   intros v1 v2 e H.
   inductions H; eauto.
-  inverts~ H.
 Qed.
 
 Lemma papp_3_lc: forall v1 v2 e,
@@ -250,7 +257,8 @@ Lemma step_1_lc: forall e1 e2,
     step e1 e2 -> lc_exp e1.
 Proof.
   intros e1 e2 H.
-  induction~ H.
+  induction~ H. inversion H0; subst. auto. auto.
+  apply papp_2_lc in H0. auto.
 Qed.
 
 Lemma step_2_lc: forall e1 e2,
@@ -280,6 +288,11 @@ Lemma consistent_prevalue1 : forall u1 u2,
 Proof.
   intros u1 u2 H.
   induction~ H.
+  constructor. constructor. 
+  forwards: prevalue_lc IHconsistent.
+  assert ( mhl: forall e T, lc_exp (e_anno e T) -> lc_exp e ).
+  { intros e T lcH. inverts lcH. assumption. }
+  forwards*: mhl H0.
 Qed.
 
 Lemma consistent_prevalue2 : forall u1 u2,
@@ -287,6 +300,10 @@ Lemma consistent_prevalue2 : forall u1 u2,
 Proof.
   intros u1 u2 H.
   induction~ H. inverts* H.
+  forwards: prevalue_lc IHconsistent.
+  assert ( mhl: forall e T, lc_exp (e_anno e T) -> lc_exp e ).
+  { intros e T lcH. inverts lcH. assumption. }
+  forwards*: mhl H0.
 Qed.
 
 Hint Immediate step_prv_prevalue consistent_prevalue1 consistent_prevalue2: core.
@@ -466,6 +483,9 @@ Proof.
     forwards* (?&?): subsub_rcd_inv H3.
   - (* rcd *)
     forwards* (?&?&?): IHTyp.
+    exists (t_rcd l A). split. apply Typ_rcd.
+    apply subsub2sub in H0.
+    forwards*: Typing_chk_sub H H0. auto.
   - (* merge *)
     forwards* (?&?&?): IHTyp1.
     forwards* (?&?&?): IHTyp2.
@@ -517,8 +537,6 @@ Proof.
     forwards * : arrTyp_arrow_unique H H4.
   - (* proj *)
     forwards*: IHTy1. subst. forwards*: arrTyp_rcd_unique H H4.
-  - (* rcd *)
-    forwards*: IHTy1. subst*.
   - (* merge *)
     forwards * : IHTy1_1 H2.
     forwards * : IHTy1_2 H4.
@@ -554,9 +572,6 @@ Proof.
   - (* t_proj *)
     forwards * : IHTy1 H3. subst*.
     forwards * : arrTyp_rcd_unique H H4.
-  - (* t_rcd *)
-    forwards * : IHTy1 H1.
-    subst*.
   - (* t_and *)
     forwards * : IHTy1_1 H2.
     substs.

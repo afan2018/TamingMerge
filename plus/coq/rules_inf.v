@@ -54,7 +54,7 @@ Fixpoint close_exp_wrt_exp_rec (n1 : nat) (x1 : var) (e1 : exp) {struct e1} : ex
     | e_app e2 e3 => e_app (close_exp_wrt_exp_rec n1 x1 e2) (close_exp_wrt_exp_rec n1 x1 e3)
     | e_merge e2 e3 => e_merge (close_exp_wrt_exp_rec n1 x1 e2) (close_exp_wrt_exp_rec n1 x1 e3)
     | e_anno e2 A1 => e_anno (close_exp_wrt_exp_rec n1 x1 e2) A1
-    | e_rcd l1 e2 => e_rcd l1 (close_exp_wrt_exp_rec n1 x1 e2)
+    | e_rcd l1 A1 e2 => e_rcd l1 A1 (close_exp_wrt_exp_rec n1 x1 e2)
     | e_proj e2 l1 => e_proj (close_exp_wrt_exp_rec n1 x1 e2) l1
   end.
 
@@ -84,7 +84,7 @@ Fixpoint size_exp (e1 : exp) {struct e1} : nat :=
     | e_app e2 e3 => 1 + (size_exp e2) + (size_exp e3)
     | e_merge e2 e3 => 1 + (size_exp e2) + (size_exp e3)
     | e_anno e2 A1 => 1 + (size_exp e2) + (size_typ A1)
-    | e_rcd l1 e2 => 1 + (size_exp e2)
+    | e_rcd l1 A1 e2 => 1 + (size_typ A1) + (size_exp e2)
     | e_proj e2 l1 => 1 + (size_exp e2)
   end.
 
@@ -121,9 +121,9 @@ Inductive degree_exp_wrt_exp : nat -> exp -> Prop :=
   | degree_wrt_exp_e_anno : forall n1 e1 A1,
     degree_exp_wrt_exp n1 e1 ->
     degree_exp_wrt_exp n1 (e_anno e1 A1)
-  | degree_wrt_exp_e_rcd : forall n1 l1 e1,
+  | degree_wrt_exp_e_rcd : forall n1 l1 A1 e1,
     degree_exp_wrt_exp n1 e1 ->
-    degree_exp_wrt_exp n1 (e_rcd l1 e1)
+    degree_exp_wrt_exp n1 (e_rcd l1 A1 e1)
   | degree_wrt_exp_e_proj : forall n1 e1 l1,
     degree_exp_wrt_exp n1 e1 ->
     degree_exp_wrt_exp n1 (e_proj e1 l1).
@@ -164,9 +164,9 @@ Inductive lc_set_exp : exp -> Set :=
   | lc_set_e_anno : forall e1 A1,
     lc_set_exp e1 ->
     lc_set_exp (e_anno e1 A1)
-  | lc_set_e_rcd : forall l1 e1,
+  | lc_set_e_rcd : forall l1 A1 e1,
     lc_set_exp e1 ->
-    lc_set_exp (e_rcd l1 e1)
+    lc_set_exp (e_rcd l1 A1 e1)
   | lc_set_e_proj : forall e1 l1,
     lc_set_exp e1 ->
     lc_set_exp (e_proj e1 l1).

@@ -26,7 +26,6 @@ Lemma principal_type_checks: forall e A B,
 Proof.
   intros e A B H H0. gen B.
   induction H; intros; try solve [inverts* H0].
-  - inverts* H0. forwards*: IHpType H3. subst*.
   - inverts H1;
       forwards*: IHpType1;
       forwards*: IHpType2;
@@ -88,15 +87,15 @@ Proof.
   inverts~ H.
 Qed.
 
-Lemma prevalue_rcd_inv : forall l u,
-    prevalue (e_rcd l u) -> prevalue u.
+(* Lemma prevalue_rcd_inv : forall l u A,
+    prevalue (e_rcd l A u) -> prevalue u.
 Proof.
-  intros l u  H.
+  intros l u A H.
   inductions H; auto.
   inverts~ H.
-Qed.
+Qed. *)
 
-Hint Immediate prevalue_merge_l_inv prevalue_merge_r_inv prevalue_rcd_inv: core.
+Hint Immediate prevalue_merge_l_inv prevalue_merge_r_inv: core.
 
 (* TypedReduce *)
 Lemma TypedReduce_prv_value: forall v A v',
@@ -166,12 +165,12 @@ Proof with eauto with common.
   - inverts Typ...
   - inverts Typ...
   - inverts Val.
+    inverts Typ...
+  - inverts Val.
+    inverts Typ...
+  - inverts Val.
     inverts Typ.
     forwards*: IHRed...
-  - inverts Val.
-    inverts Typ...
-  - inverts Val.
-    inverts Typ...
   - forwards*: IHRed1...
 Qed.
 
@@ -205,8 +204,6 @@ Proof with eauto.
       forwards* (?&?): prevalue_exists_ptype v2;
       forwards* : principal_type_checks v1;
       forwards* : principal_type_checks v2; subst...
-  - inverts* Typ.
 Qed.
-
 
 Hint Resolve consistent_refl : core.
