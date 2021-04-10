@@ -16,14 +16,12 @@ Require Import List. Import ListNotations.
 Require Import Arith Omega.
 Require Import Strings.String.
 
-
 (* requires sub Top A -> toplike A *)
 Lemma TypedReduce_trans : forall v v1 v2 A B,
     value v -> TypedReduce v A v1 -> TypedReduce v1 B v2 -> TypedReduce v B v2.
 Proof with eauto.
   introv Val Red1 Red2. gen B v2.
   induction* Red1; introv Red2; inductions Red2...
-  inverts* Val.
 Qed.
 
 
@@ -46,8 +44,8 @@ Proof with eauto.
     simpl. exists. splits*.
     inverts Typ. applys Typ_abs. intros. apply~ Typing_chk_sub.
   - Case "rcd".
-    inverts Val. inverts Typ; forwards* (?&?&?&?): IHRed.
-    exists* (t_rcd l x).
+    inverts Typ.
+    exists* (t_rcd l B).
   - Case "mergel".
     inverts Val. inverts Typ; forwards*: IHRed.
   - Case "merger".
@@ -75,20 +73,29 @@ Qed.
 
 
 
-Lemma papp_consistent : forall v1 v2 v e1 e2 A B C,
-    value v1 -> value v2 -> value v ->
-    Typing nil v1 Inf A -> Typing nil v2 Inf B -> Typing nil v Inf C ->
-    papp v1 (vl_exp v) e1 -> papp v2 (vl_exp v) e2 -> consistent v1 v2 -> consistent e1 e2.
+Lemma papp_consistent : forall v1 v2 e e1 e2 A B C,
+    value v1 -> value v2 ->
+    Typing nil v1 Inf A -> Typing nil v2 Inf B -> Typing nil e Inf C ->
+    papp v1 (vl_exp e) e1 -> papp v2 (vl_exp e) e2 -> consistent v1 v2 -> consistent e1 e2.
 Proof with (solve_false; eauto).
-  introv Val1 Val2 Val3 Typ1 Typ2 Typ3 P1 P2 Cons.
+  introv Val1 Val2 Typ1 Typ2 Typ3 P1 P2 Cons.
   gen A B C. lets P1': P1. lets P2': P2.
   inductions P1; inductions P2; intros; try solve [applys* C_disjoint].
   - forwards* [?|(?&?)]: consistent_lams_inv Cons.
     + applys* C_disjoint.
-    + subst. forwards*: TypedReduce_unique H0 H2.
-      subst*.
+    + subst*.
   - lets* (?&?): consistent_merger Cons. inverts* Typ2.
-  - lets* (?&?): consistent_merger Cons. inverts* Typ2.
+  - lets (?&?): consistent_merger Cons. inverts* Typ2.
+    inverts keep Val2.
+    forwards*: value_lc H3.
+    constructor.
+    inverts keep Val2.
+    inverts Typ2.
+    forwards*: IHP2_1 H.
+    forwards*: IHP2_1 H.
+    inverts Typ2.
+    forwards*: IHP2_2 H.
+    forwards*: IHP2_2 H.
   - lets* (?&?): consistent_mergel Cons. inverts* Typ1.
   - lets* (?&?): consistent_mergel Cons. inverts* Typ1.
   - (* merge ~ merge *)
@@ -112,26 +119,27 @@ Proof with (solve_false; eauto).
     try solve [lets* (?&?): consistent_merger Cons; inverts* Typ2].
   - inverts Cons.
     + inverts P1'. inverts P2'. subst*.
-    + enough (consistent (e_rcd l v) (e_rcd l v0)). eauto.
-      applys* C_disjoint H3.
+    + inverts H1. inverts H2. inverts H3. 
+      forwards*: C_disjoint (e_anno e A) (e_anno e0 A0).
+      destruct H2...
 Qed.
 
 
-Lemma papp_preservation : forall v1 v2 e A,
-    value v1 -> value v2 ->
-    Typing nil (e_app v1 v2) Inf A ->
-    papp v1 (vl_exp v2) e ->
-    Typing nil e Inf A.
+Lemma papp_preservation : forall v1 e e' A,
+    value v1 ->
+    Typing nil (e_app v1 e) Inf A ->
+    papp v1 (vl_exp e) e' ->
+    Typing nil e' Inf A.
 Proof with eauto.
-  intros v1 v2 e A Val1 Val2 Typ P. gen A.
+  intros v1 e e' A Val1 Typ P. gen A.
   inductions P; intros; inverts Typ as Typ1 Typ2 Typ3.
   - (* abs *)
-    forwards* (T & Htyp & Hsub): Typing_chk2inf Typ3.
-    forwards (? & p1 & p2 & p3): TypedReduce_preservation Htyp...
-    inverts Typ1 as t1. inverts Typ2.
-    eapply Typ_anno. pick fresh y. rewrite (@subst_exp_intro y)...
-    forwards~ t1': (t1 y). rewrite_env([]++[(y,B0)]++ []) in t1'.
-    lets~ (?&s1&s2): Typing_subst_2 t1' p2 p3.
+    inverts Typ1. inverts Typ2.
+    constructor.
+    pick fresh y. rewrite (@subst_exp_intro y)...
+    forwards~: (H6 y). rewrite_env([]++[(y,B0)]++ []) in H1.
+    forwards~: Typ_anno Typ3.
+    lets~ (?&s1&s2): Typing_subst_2 H1 H2.
     apply subsub2sub in s2. forwards*: Typing_chk_sub s2.
   - (* top *)
     inverts Typ1. inverts* Typ2.
@@ -141,10 +149,21 @@ Proof with eauto.
     inverts Typ1; inverts Typ2;
       assert (sub (t_and A2 B2) A2) by auto_sub;
       assert (sub (t_and A2 B2) B2) by auto_sub;
-      forwards~: IHP1 v2; [ applys* Typ_app H7 | auto | applys* Typ_app H8 | auto ];
-      forwards~: IHP2 v2; [ applys* Typ_app H9 | auto | applys* Typ_app H10 | auto ].
+      forwards: Typing_chk_sub Typ3 H.
+      forwards~: Typ_app v1 H7 H4.
+      forwards: Typing_chk_sub Typ3 H0.
+      forwards~: Typ_app v2 H9 H10.
+      forwards*: IHP1 H8.
+      forwards*: IHP2 H11.
     + apply~ Typ_merge. applys* arrTyp_arr_disjoint H6.
-    + apply~ Typ_mergev. applys* papp_consistent P1 P2.
+    + apply~ Typ_mergev. 
+      forwards~: Typ_app v1 H8 H5.
+      forwards: Typing_chk_sub Typ3 H0.
+      forwards~: IHP1 H9.
+      forwards: Typing_chk_sub Typ3 H0.
+      forwards~: Typ_app v2 H10 H9.
+      forwards*: IHP2 H11.
+      applys* papp_consistent P1 P2.
 Qed.
 
 
@@ -195,7 +214,7 @@ Proof with (simpl; omega).
       inverts keep Typ1. inverts keep Typ2.
       inverts ST1 as ST1'; inverts ST2 as ST2'; solve_false; eauto;
         inverts ST1' as Hv1 Hs1; inverts ST2' as Hv2 Hs2; solve_false.
-      * (* value VS step *)
+      (* (* value VS step *)
         applys C_rcd. applys* IHCons. intros.
         forwards* (?&?&?): IH H3. simpl. omega.
       * (* step VS value *)
@@ -203,7 +222,7 @@ Proof with (simpl; omega).
         forwards* (?&?&?): IH H3. simpl. omega.
       * (* step VS step *)
         applys C_rcd. applys* IHCons. intros.
-        forwards* (?&?&?): IH H3. simpl. omega.
+        forwards* (?&?&?): IH H3. simpl. omega. *)
     + (* disjoint *)
       inverts ST1 as ST1'; [unify_pType e1' | unify_pType u1];
         inverts ST2 as ST2'; try unify_pType e2'; try unify_pType u2.
@@ -262,10 +281,9 @@ Proof with (simpl; try omega; auto; try eassumption; auto).
     try solve [inverts J]; repeat simpl in SizeInd.
   - Case "typing_app".
     inverts J as J1 J2 J3; try forwards* (?&?&S2): IH J2; assert (size_exp e1 >0) by eomg; eomg.
-    + forwards*: papp_preservation J3.
+    + forwards*: papp_preservation J2.
     + lets* ( ?&? & Harr & Hsub ): arrTyp_arr_subsub Ht2 S2.
     forwards* (?&?): subsub_arr_inv Hsub.
-    + exists. split*. applys* Typ_app Ht2. applys* Typing_chk_sub.
   - Case "typing_proj".
     inverts J as J1 J2 J3; try forwards* (?&?&S2): IH J1; eomg.
     + forwards*: papp_preservation2 J2.
@@ -276,11 +294,11 @@ Proof with (simpl; try omega; auto; try eassumption; auto).
     inverts J as J1 J2 J3;
     try forwards* (?&?&?): IH J1; eomg;
     try forwards* (?&?&?): IH J2; eomg.
-  - Case "typing_merge".
+  (* - Case "typing_merge".
     (* disjoint *)
     inverts J as J1 J2 J3;
     try forwards* (?&?&?): IH J1; eomg;
-    try forwards* (?&?&?): IH J2; eomg.
+    try forwards* (?&?&?): IH J2; eomg. *)
   - Case "typing_anno".
     inverts Ht1. inverts J as J1 J2 J3.
     + lets* (?&?): TypedReduce_preservation J2.

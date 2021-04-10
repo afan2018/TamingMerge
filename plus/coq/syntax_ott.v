@@ -427,7 +427,7 @@ Inductive TypedReduce : exp -> typ -> exp -> Prop :=    (* defn TypedReduce *)
      ord B ->
       not ( topLike B )  ->
      sub A B ->
-     TypedReduce (e_rcd l A e) (t_rcd l B) (e_rcd l B (e_anno e B))
+     TypedReduce (e_rcd l A e) (t_rcd l B) (e_rcd l B e)
  | TReduce_mergevl : forall (v1 v2:exp) (A:typ) (v1':exp),
      lc_exp v2 ->
      ord A ->
@@ -546,7 +546,7 @@ Inductive consistent : exp -> exp -> Prop :=    (* defn consistent *)
  | C_anno : forall (e:exp) (A B:typ),
      lc_exp e ->
      consistent (e_anno e A) (e_anno e B)
- | C_rcdb : forall (l:i) (A:typ) (e1:exp) (B:typ) (e2:exp),
+ | C_rcd : forall (l:i) (A:typ) (e1:exp) (B:typ) (e2:exp),
      consistent (e_anno e1 A) (e_anno e2 B) ->
      consistent (e_rcd l A e1) (e_rcd l B e2)
  | C_disjoint : forall (u1 u2:exp) (A B:typ),

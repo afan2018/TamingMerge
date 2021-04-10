@@ -37,7 +37,7 @@ Proof with eauto.
       induction v; intros; inverts Typ; try solve [inverts Val]...
   - lets *[?|?]: toplike_decidable D.
     inverts Typ; inverts Val.
-    exists (e_rcd l D (e_anno e D)).
+    exists (e_rcd l D e).
     constructor; assumption.
   -
     forwards* (?&?): IHSub1 Typ.
